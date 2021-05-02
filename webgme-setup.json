@@ -1,0 +1,29 @@
+{
+  "components": {
+    "visualizers": {
+      "SimPetriNetFiring": {
+        "src": "panels/SimPetriNetFiring/SimPetriNetFiringPanel",
+        "title": "SimPetriNetFiring",
+        "panel": "src/visualizers/panels/SimPetriNetFiring",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/SimPetriNetFiring"
+      }
+    },
+    "plugins": {
+      "validatePetriNet": {
+        "src": "src/plugins/validatePetriNet",
+        "test": "test/plugins/validatePetriNet"
+      }
+    },
+    "seeds": {
+      "petri_nets": {
+        "src": "src/seeds/petri_nets"
+      }
+    }
+  },
+  "dependencies": {
+    "visualizers": {},
+    "plugins": {},
+    "seeds": {}
+  }
+}

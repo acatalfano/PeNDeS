@@ -1,0 +1,8 @@
+[
+  {
+    "id": "SimPetriNetFiring",
+    "title": "SimPetriNetFiring",
+    "panel": "panels/SimPetriNetFiring/SimPetriNetFiringPanel",
+    "DEBUG_ONLY": false
+  }
+]

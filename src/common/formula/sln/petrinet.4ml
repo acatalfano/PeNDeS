@@ -1,0 +1,381 @@
+domain Net {
+    Place ::= new (name: String).
+    Transition ::= new (name: String).
+    StartFlow ::= new (src: Place, dst: Transition).
+    EndFlow ::= new (src: Transition, dst: Place).
+}
+
+domain PetriNets extends Net {
+    Marks ::= fun (place: Place => val: Integer).
+    StartWeight ::= fun (flow: StartFlow => val: Integer).
+    EndWeight ::= fun (flow: EndFlow => val: Integer).
+    
+    negativeMarks ::= (Marks).
+    negativeMarks(m) :- m is Marks(_, val), val < 0.
+
+    nonPositiveWeights ::= (StartWeight + EndWeight).
+    nonPositiveWeights(w) :- w is StartWeight(_, val), val < 1.
+    nonPositiveWeights(w) :- w is EndWeight(_, val), val < 1.
+
+    conforms no negativeMarks(_), no nonPositiveWeights(_).
+    
+    transitionEnabled ::= (Transition).
+    transitionEnabled(t) :- t is Transition(_),
+        no { p | p is Place(_), f is StartFlow(p, t), StartWeight(f, w), Marks(p, m), m < w }.
+}
+
+domain FreeChoicePetriNets extends PetriNets {
+    freeChoice :- count({p|
+        t1 is Transition(_), t2 is Transition(_), p is Place(_), t1 != t2,
+        StartFlow(p, t1), StartFlow(p, t2)
+    }) = 0.
+
+    conforms freeChoice.
+}
+
+domain StateMachines extends PetriNets {
+    notOneInPlace ::= (Transition).
+    notOneInPlace(t) :- t is Transition, count({p | p is Place(_), StartFlow(p,t)}) != 1.
+    notOneOutPlace ::= (Transition).
+    notOneOutPlace(t) :- t is Transition, count({p | p is Place(_), EndFlow(t,p)}) != 1.
+
+    conforms no notOneInPlace(_).
+    conforms no notOneOutPlace(_).
+}
+
+domain MarkedGraphs extends PetriNets {
+    notOneInTransition ::= (Place).
+    notOneInTransition(p) :- p is Place(_), count({t | t is Transition(_), EndFlow(t,p)}) != 1.
+    notOneOutTransition ::= (Place).
+    notOneOutTransition(p) :- p is Place(_), count({t | t is Transition(_), StartFlow(p,t)}) != 1.
+
+    conforms no notOneInTransition(_).
+    conforms no notOneOutTransition(_).
+}
+
+domain WorkflowNets extends PetriNets {
+    isSource ::= (Place).
+    isSource(p) :- p is Place(_), count({t| t is Transition(_), EndFlow(t,p)}) = 0.
+    notSingleSource :- count({p| isSource(p)}) != 1.
+
+    countOuts ::= (Place, Integer).
+    countOuts(p,i) :- p is Place(_), count({t| t is Transition(_), EndFlow(t,p)}) = i.
+
+    isSink ::= (Place).
+    isSink(p) :- p is Place(_), count({t| t is Transition(_), StartFlow(p,t)}) = 0.
+    notSingleSink :- count({p| isSink(p)}) != 1.
+
+    notOnPath ::= (Place + Transition).
+    notOnPath(p) :- p is Place(_), no onPath(p).
+    notOnPath(t) :- t is Transition(_), no onPath(t).
+
+    onPath ::= (Place + Transition).
+    onPath(p) :- isSource(p).
+    onPath(p) :- isSink(p).
+    onPath(pt) :- isSource(src), isSink(snk), pathSequence(src, pt, snk).
+
+    pathSequence ::= (Place, Place + Transition, Place).
+    pathSequence(i,x,o) :- i is Place(_), o is Place(_), pathExists(i,x), pathExists(x,o).
+
+    pathExists ::= (Place + Transition, Place + Transition).
+    pathExists(a,b) :- a is Place(_), b is Transition(_), StartFlow(a,b).
+    pathExists(a,b) :- a is Transition(_), b is Place(_), EndFlow(a,b).
+    pathExists(a,b) :- a is Place(_), x is Transition(_), StartFlow(a,x), pathExists(x,b).
+    pathExists(a,b) :- a is Transition(_), x is Place(_), EndFlow(a,x), pathExists(x,b).
+
+
+    conforms no notSingleSource.
+    conforms no notSingleSink.
+    conforms no notOnPath(_).
+}
+
+model wf of WorkflowNets {
+    s is Place("S").
+    //os is Place("os").
+    a is Place("A").
+    b is Place("B").
+    c is Place("C").
+    x is Place("X").
+    //ox is Place("ox").
+    //i is Place("I").
+    //pi is Place("pi").
+
+    t1 is Transition("1").
+    t2 is Transition("2").
+    t3 is Transition("3").
+    t4 is Transition("4").
+    //ts is Transition("ts").
+    //tx is Transition("tx").
+    //ti is Transition("ti").
+
+
+    s1 is StartFlow(s,t1).
+    s2 is StartFlow(s,t2).
+    //s3 is StartFlow(os,t2).
+    //s4 is StartFlow(os,ts).
+    s5 is StartFlow(a,t3).
+    s6 is StartFlow(b,t3).
+    s7 is StartFlow(b,t4).
+    s8 is StartFlow(c,t4).
+    //s9 is StartFlow(i,tx).
+    //s10 is StartFlow(a,tx).
+    //s11 is StartFlow(pi,ti).
+
+    e1 is EndFlow(t1,a).
+    e2 is EndFlow(t1,c).
+    e3 is EndFlow(t2,b).
+    e4 is EndFlow(t2,c).
+    e5 is EndFlow(t3,x).
+    e6 is EndFlow(t4,x).
+    //e7 is EndFlow(t4,ox).
+    //e8 is EndFlow(tx,ox).
+    //e9 is EndFlow(t1,i).
+    //e10 is EndFlow(ti,pi).
+
+    Marks(s,5).
+    //Marks(os,1).
+    Marks(a,0).
+    Marks(b,3).
+    Marks(c,1).
+    Marks(x,0).
+    //Marks(ox,5).
+    //Marks(i,1).
+    //Marks(pi,0).
+
+    StartWeight(s1,1).
+    StartWeight(s2,1).
+    //StartWeight(s3,1).
+    //StartWeight(s4,1).
+    StartWeight(s5,1).
+    StartWeight(s6,1).
+    StartWeight(s7,1).
+    StartWeight(s8,1).
+    //StartWeight(s9,1).
+    //StartWeight(s10,1).
+    //StartWeight(s11,1).
+
+    EndWeight(e1,1).
+    EndWeight(e2,1).
+    EndWeight(e3,1).
+    EndWeight(e4,1).
+    EndWeight(e5,1).
+    EndWeight(e6,1).
+    //EndWeight(e7,1).
+    //EndWeight(e8,1).
+    //EndWeight(e9,1).
+    //EndWeight(e10,1).
+}
+
+model sm of StateMachines {
+    a is Place("A").
+    b is Place("B").
+    c is Place("C").
+    d is Place("D").
+    e is Place("E").
+
+    t1 is Transition("1").
+    t2 is Transition("2").
+
+    s1 is StartFlow(a,t1).
+    s2 is StartFlow(e,t2).
+
+    e1 is EndFlow(t1,b).
+    e2 is EndFlow(t2,e).
+
+    StartWeight(s1, 5).
+    StartWeight(s2, 7).
+
+    EndWeight(e1, 2).
+    EndWeight(e2, 1).
+
+    Marks(a, 4).
+    Marks(b, 0).
+    Marks(c, 0).
+    Marks(d, 0).
+    Marks(e, 1).
+}
+
+
+model fc of FreeChoicePetriNets {
+    a is Place("A").
+    b is Place("B").
+    c is Place("C").
+    d is Place("D").
+
+    t1 is Transition("1").
+    t2 is Transition("2").
+
+    sa1 is StartFlow(a, t1).
+    sb1 is StartFlow(b, t1).
+    sb2 is StartFlow(b, t2).
+    sc2 is StartFlow(c, t2).
+    e1d is EndFlow(t1, d).
+    e2c is EndFlow(t2, c).
+    e1c is EndFlow(t1, c).
+
+    Marks(a, 4).
+    Marks(b, 0).
+    Marks(c, 0).
+    Marks(d, 0).
+
+    StartWeight(sa1, 3).
+    StartWeight(sb1, 2).
+    StartWeight(sb2, 2).
+    StartWeight(sc2, 1).
+    EndWeight(e1d, 5).
+    EndWeight(e2c, 4).
+    EndWeight(e1c, 3).
+}
+
+model mg of MarkedGraphs {
+    a is Place("A").
+    b is Place("B").
+    //c is Place("C").
+    
+    t1 is Transition("1").
+    t2 is Transition("2").
+    t3 is Transition("3").
+
+    s1 is StartFlow(a, t1).
+    e1 is EndFlow(t2, b).
+    e2 is EndFlow(t2, a).
+    s2 is StartFlow(b, t2).
+
+    StartWeight(s1, 5).
+    EndWeight(e1, 2).
+    EndWeight(e2, 8).
+    StartWeight(s2, 1).
+
+    Marks(a,1).
+    Marks(b,2).
+    //Marks(c,3).
+}
+
+
+
+//transform Fire<t: pn.Transition> from PetriNets as pn to PetriNets as out {
+transform Fire(pn:: PetriNets) returns (out:: PetriNets) {
+    out.Place(n) :- pn.Place(n).
+    out.Transition(n) :- pn.Transition(n).
+    out.StartFlow(p, t) :- pn.StartFlow(p, t).
+    out.EndFlow(t, p) :- pn.EndFlow(t, p).
+    out.StartWeight(f, v) :- pn.StartWeight(f, v).
+    out.EndWeight(f, v) :- pn.EndWeight(f, v).
+    
+    // *t = {p | p ∈ P ^ ∃f∈StartFlow f(p,t)}
+    // t* = {p | p ∈ P ^ ∃f∈EndFlow f(p,t)}
+
+    // p ∈ *t ==> p is Place(_), StartFlow(p, t).
+    // p ∉ *t ==> p is Place(_), no StartFlow(p, t).
+    // p ∈ t* ==> p is Place(_), EndFlow(t, p).
+    // p ∉ t* ==> p is Place(_), no EndFlow(t, p).
+    isOutPlace ::= (pn.Place).
+    isOutPlace(p) :- p is pn.Place(_), pn.StartFlow(p, t).
+
+    isInPlace ::= (pn.Place).
+    isInPlace(p) :- p is pn.Place(_), pn.EndFlow(t, p).
+    // p ∈ *t ==> isOutPlace(p)
+    // p ∉ *t ==> no isOutPlace(p)
+    // p ∈ t* ==> isInPlace(p)
+    // p ∉ t* ==> no isInPlace(p)
+
+    // n' <-- n if p ∉ *t, p ∉ t*
+    // n' <-- n if no enabled(t)
+    // n' <-- n + W(f(t,p)) if enabled(t), p ∉ *t, p ∈ t*
+    // n' <-- n - W(f(p,t)) if enabled(t), p ∈ *t, p ∉ t*
+    // n' <-- n + W(f(t,p)) - W(f(p,t)) if enabled(t), p ∈ *t, p ∈ t*
+    // out.Marks(p, n) <--- pn.Marks(p, n')
+    // W(f(t,p)) <---- pn.EndWeight(pn.EndFlow(t,p))
+    // W(f(p,t)) <---- pn.StartWeight(pn.StartFlow(p,t))
+
+    out.Marks(p,n) :- p is pn.Place(_), pn.Marks(p, val), n = val, no isInPlace(p), no isOutPlace(p).
+}
+
+model n of Net {
+    p1 is Place("p1").
+    p2 is Place("p2").
+    p3 is Place("p3").
+
+    t1 is Transition("t1").
+    t2 is Transition("t2").
+    t3 is Transition("t3").
+    t4 is Transition("t4").
+
+    StartFlow(p1, t2).
+    StartFlow(p1, t4).
+    StartFlow(p2, t2).
+
+    EndFlow(t2, p3).
+    EndFlow(t3, p1).
+    EndFlow(t2, p2).
+    EndFlow(t3, p1).
+}
+
+model n2 of PetriNets {
+
+    //s1 is StartFlow(p1, t2).
+    //s2 is StartFlow(p1, t4).
+    //s3 is StartFlow(p2, t2).
+
+    //e1 is EndFlow(t2, p3).
+    //e2 is EndFlow(t3, p1).
+    //e3 is EndFlow(t2, p2).
+    //e4 is EndFlow(t4, p1).
+
+    //Marks(p1, 1).
+    //Marks(p2, 3).
+    //Marks(p3, 10).
+
+    //StartWeight(s1, 1).
+    //StartWeight(s2, 5).
+    //StartWeight(s3, 6).
+    //EndWeight(e1, 2).
+    //EndWeight(e2, 10).
+    //EndWeight(e3, 15).
+    //EndWeight(e4, 8).
+
+    p is Place("p").
+    t is Transition("t").
+    s is StartFlow(p, t).
+
+    
+    p1 is Place("p1").
+    p2 is Place("p2").
+    p3 is Place("p3").
+
+    t1 is Transition("t1").
+    t2 is Transition("t2").
+    t3 is Transition("t3").
+    t4 is Transition("t4").
+
+    Marks(p1, 1).
+    Marks(p2, 10).
+    Marks(p3, 0).
+
+    s1 is StartFlow(p1, t1).
+    s2 is StartFlow(p2, t1).
+    s3 is StartFlow(p3, t1).
+
+    StartWeight(s1, 1).
+    StartWeight(s2, 8).
+    StartWeight(s3, 10).
+
+    Marks(p, 7).
+    StartWeight(s, 5).
+}
+
+model n3 of PetriNets {
+    a is Place("A").
+    b is Place("B").
+
+    t1 is Transition("t1").
+
+    s1 is StartFlow(a, t1).
+
+    e1 is EndFlow(t1, b).
+
+    Marks(a, 1).
+
+    StartWeight(s1, 1).
+    EndWeight(e1, 1).
+}
