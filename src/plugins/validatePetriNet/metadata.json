@@ -11,5 +11,13 @@
     "disableBrowserSideExecution": true,
     "dependencies": [],
     "writeAccessRequired": false,
-    "configStructure": []
+    "configStructure": [
+        {
+            "name": "validateBy",
+            "displayName": "validateBy",
+            "description": "Array of domains to validate by",
+            "value": ["MarkedGraphs", "FreeChoicePetriNets", "StateMachines", "WorkflowNets"],
+            "valueType": "array"
+        }
+    ]
 }

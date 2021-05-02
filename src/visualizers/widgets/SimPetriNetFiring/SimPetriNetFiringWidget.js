@@ -8,27 +8,15 @@ define([
     'jointjs',
     'lodash',
     'geometry',
-    'pendes/place-svg-helper',
-    // 'backbone',
-    // 'jquery',
-    // 'graphlib',
-    // 'dagre',
-    // 'jointjs.core',
-    // 'vectorizer',
-    // 'geometry',
-    // 'joint.nowrap',
-    // 'jointjs.pn',
-    // 'css!jointjs.core.css',
     'css!jointjs.css',
     'css!./styles/SimPetriNetFiringWidget.css',
     'pendes/firing-sim-defs',
-], function (joint, _, g, placeSvg) {
+], function (joint, _, g) {
     'use strict';
 
     var WIDGET_CLASS = 'sim-petri-net-firing';
 
     function SimPetriNetFiringWidget(logger, container) {
-        this.placeSvg = placeSvg;
         this._logger = logger.fork('Widget');
 
         this._el = container;
@@ -46,16 +34,6 @@ define([
 
         // set widget class
         this._el.addClass(WIDGET_CLASS);
-
-        // Create a dummy header
-        //this._el.append('<h3>SimPetriNetFiring Events:</h3>');
-
-        // Registering to events can be done with jQuery (as normal)
-        // this._el.on('dblclick', function (event) {
-        //     event.stopPropagation();
-        //     event.preventDefault();
-        //     self.onBackgroundDblClick();
-        // });
 
         this._graph = new joint.dia.Graph();
         this._adjustVertices = _.partial(this._adjustVertices, this._graph);
@@ -88,203 +66,10 @@ define([
     };
 
     SimPetriNetFiringWidget.prototype.initPetriNet = function (petriNet) {
-        const self = this;
-        //#region places and graph
-        // const graph = this._graph;
-        // var pn = joint.shapes.pn;
-
-        // var pReady = new pn.Place({
-        //     position: { x: 140, y: 50 },
-        //     attrs: {
-        //         '.label': {
-        //             text: 'ready',
-        //             fill: '#7c68fc',
-        //         },
-        //         '.root': {
-        //             stroke: '#9586fd',
-        //             'stroke-width': 3,
-        //         },
-        //         '.tokens > circle': {
-        //             fill: '#7a7e9b',
-        //         },
-        //     },
-        //     tokens: 1,
-        // });
-        // debugger;
-
-        // var pIdle = pReady.clone().attr('.label/text', 'idle').position(140, 260).set('tokens', 2);
-
-        // var buffer = pReady
-        //     .clone()
-        //     .position(350, 160)
-        //     .set('tokens', 12)
-        //     .attr({
-        //         '.label': {
-        //             text: 'buffer',
-        //         },
-        //         '.alot > text': {
-        //             fill: '#fe854c',
-        //             'font-family': 'Courier New',
-        //             'font-size': 20,
-        //             'font-weight': 'bold',
-        //             'ref-x': 0.5,
-        //             'ref-y': 0.5,
-        //             'y-alignment': -0.5,
-        //             transform: null,
-        //         },
-        //     });
-
-        // var cAccepted = pReady.clone().attr('.label/text', 'accepted').position(550, 50).set('tokens', 1);
-
-        // var cReady = pReady.clone().attr('.label/text', 'accepted').position(560, 260).set('ready', 3);
-        //#endregion
-
-        //#region transitions
-        // var pProduce = new pn.Transition({
-        //     position: { x: 50, y: 160 },
-        //     attrs: {
-        //         '.label': {
-        //             text: 'produce',
-        //             fill: '#fe854f',
-        //         },
-        //         '.root': {
-        //             fill: '#9586fd',
-        //             stroke: '#9586fd',
-        //         },
-        //     },
-        // });
-
-        // var pSend = pProduce.clone().attr('.label/text', 'send').position(270, 160);
-
-        // var cAccept = pProduce.clone().attr('.label/text', 'accept').position(470, 160);
-
-        // var cConsume = pProduce.clone().attr('.label/text', 'consume').position(680, 160);
-        //#endregion
-
-        //#region links
-        // function link(a, b) {
-        //     return new //pn.Link
-        //     joint.shapes.standard.Link({
-        //         source: { id: a.id, selector: '.root' },
-        //         target: { id: b.id, selector: '.root' },
-        //         attrs: {
-        //             '.connection': {
-        //                 fill: 'none',
-        //                 'stroke-linejoin': 'round',
-        //                 'stroke-width': '2',
-        //                 stroke: '#4b4a67',
-        //             },
-        //         },
-        //     });
-        // }
-
-        // graph.addCell([pReady, pIdle, buffer, cAccepted, cReady, pProduce, pSend, cAccept, cConsume]);
-
-        // graph.addCell([
-        //     link(pProduce, pReady),
-        //     link(pReady, pSend),
-        //     link(pSend, pIdle),
-        //     link(pIdle, pProduce),
-        //     link(pSend, buffer),
-        //     link(buffer, cAccept),
-        //     link(cAccept, cAccepted),
-        //     link(cAccepted, cConsume),
-        //     link(cConsume, cReady),
-        //     link(cReady, cAccept),
-        // ]);
-        //#endregion
-
-        //#region logic
-        // function fireTransition(t, sec) {
-        //     var inbound = graph.getConnectedLinks(t, { inbound: true });
-        //     var outbound = graph.getConnectedLinks(t, { outbound: true });
-
-        //     var placesBefore = inbound.map(function (link) {
-        //         return link.getSourceElement();
-        //     });
-        //     var placesAfter = outbound.map(function (link) {
-        //         return link.getTargetElement();
-        //     });
-
-        //     var isFirable = true;
-        //     placesBefore.forEach(function (p) {
-        //         if (p.get('tokens') === 0) {
-        //             isFirable = false;
-        //         }
-        //     });
-
-        //     if (isFirable) {
-        //         placesBefore.forEach(function (p) {
-        //             // Let the execution finish before adjusting the value of tokens. So that we can loop over all transitions
-        //             // and call fireTransition() on the original number of tokens.
-        //             setTimeout(function () {
-        //                 p.set('tokens', p.get('tokens') - 1);
-        //             }, 0);
-
-        //             var links = inbound.filter(function (l) {
-        //                 return l.getSourceElement() === p;
-        //             });
-
-        //             links.forEach(function (l) {
-        //                 var token = joint.V('circle', { r: 5, fill: '#feb662' });
-        //                 l.findView(self._paper).sendToken(token, sec * 1000);
-        //             });
-        //         });
-
-        //         placesAfter.forEach(function (p) {
-        //             var links = outbound.filter(function (l) {
-        //                 return l.getTargetElement() === p;
-        //             });
-
-        //             links.forEach(function (l) {
-        //                 var token = joint.V('circle', { r: 5, fill: '#feb662' });
-        //                 l.findView(self._paper).sendToken(token, sec * 1000, function () {
-        //                     p.set('tokens', p.get('tokens') + 1);
-        //                 });
-        //             });
-        //         });
-        //     }
-        // }
-
-        // function simulate() {
-        //     var transitions = [pProduce, pSend, cAccept, cConsume];
-        //     transitions.forEach(function (t) {
-        //         if (Math.random() < 0.7) {
-        //             fireTransition(t, 1);
-        //         }
-        //     });
-
-        //     return setInterval(function () {
-        //         transitions.forEach(function (t) {
-        //             if (Math.random() < 0.7) {
-        //                 fireTransition(t, 1);
-        //             }
-        //         });
-        //     }, 2000);
-        // }
-
-        // var simulationId = simulate();
-
-        // function stopSimulation(simulationId) {
-        //     clearInterval(simulationId);
-        // }
-        // return;
-        //#endregion
-        //TODO:
-        //NOTE: this._petriNet is "this._webgmePN" in the example
         this._petriNet = petriNet;
         this._graph.clear();
 
-        //"this._joinPN" in the example is this._graph
-        //"this._jointPaper" is this._paper
-
         const { places, transitions, flows } = this._petriNet;
-        // Object.entries(places).forEach(([id, { name, position,  }]) => {
-        //     const vertex = new joint.shapes.pn.Place({
-        //         position:
-        //     })
-        // })
-        //TODO: remove vvvv
         this.dupFlows = [];
 
         const placeVertices = this._buildPlaceVertices(places);
@@ -298,12 +83,6 @@ define([
             ...transitionVertices.map(({ vertex }) => vertex),
         ]);
         this._graph.addCell(flowVertices);
-
-        //TODO: vvvvvvv
-        //TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO:
-        //TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO: TODO:
-        //TODO: not a function??????????
-        //this._paper.updateViews();
         this._decorate();
     };
 
@@ -319,7 +98,6 @@ define([
                     },
                     '.root': {
                         stroke: '#000',
-                        //fill: 'none',
                         style: {
                             cursor: 'default',
                         },
@@ -366,64 +144,23 @@ define([
     };
 
     SimPetriNetFiringWidget.prototype._buildFlows = function (flows) {
-        // function link(a, b) {
-        //     return new //pn.Link
-        //     joint.shapes.standard.Link({
-        //         source: { id: a.id, selector: '.root' },
-        //         target: { id: b.id, selector: '.root' },
-        //         attrs: {
-        //             '.connection': {
-        //                 fill: 'none',
-        //                 'stroke-linejoin': 'round',
-        //                 'stroke-width': '2',
-        //                 stroke: '#4b4a67',
-        //             },
-        //         },
-        //     });
-        // }
-        return flows.map(({ weight, srcId, dstId, isInputFlow }) =>
-            //TODO: weight...
-            {
-                //TODO: do something here vvvv (for "curved" paths)
-                if (isInputFlow && this._petriNet.places.get(srcId).inTransitions.includes(dstId)) {
-                    this.dupFlows.push({ srcId, dstId });
-                } else if (!isInputFlow && this._petriNet.transitions.get(srcId).inPlaces.includes(dstId)) {
-                    this.dupFlows.push({ srcId, dstId });
-                }
-                return new joint.shapes.standard.Link({
-                    source: { id: this._petriNet.model2jointIds.get(srcId), selector: '.root' },
-                    target: { id: this._petriNet.model2jointIds.get(dstId), selector: '.root' },
-                    attrs: {
-                        wrapper: {
-                            cursor: 'default',
-                        },
-                        // '.connection': {
-                        //     fill: 'none',
-                        //     'stroke-linejoin': 'round',
-                        //     'stroke-width': '2',
-                        //     stroke: '#4b4a67',
-                        // },
-                        //TODO: vvv this for drawing an "invisible" connection (might actually be unnecessary)
-                        // line: {
-                        //     strokeWidth: 0,
-                        //     style: {
-                        //         cursor: 'default',
-                        //     },
-                        //     targetMarker: {
-                        //         type: 'path',
-                        //         d: '',
-                        //     },
-                        // },
+        return flows.map(({ weight, srcId, dstId, isInputFlow }) => {
+            return new joint.shapes.standard.Link({
+                source: { id: this._petriNet.model2jointIds.get(srcId), selector: '.root' },
+                target: { id: this._petriNet.model2jointIds.get(dstId), selector: '.root' },
+                attrs: {
+                    wrapper: {
+                        cursor: 'default',
                     },
-                }).appendLabel({
-                    attrs: {
-                        text: {
-                            text: weight,
-                        },
+                },
+            }).appendLabel({
+                attrs: {
+                    text: {
+                        text: weight,
                     },
-                });
-            }
-        );
+                },
+            });
+        });
     };
 
     SimPetriNetFiringWidget.prototype.fireTransition = function (transition, transitionModelId) {
@@ -434,7 +171,6 @@ define([
         const outPlaces = outLinks.map((link) => link.getTargetElement());
 
         inPlaces.forEach((place) => {
-            //TODO: set weight vvv
             const weight = this._petriNet.weights
                 .get(this._petriNet.joint2modelIds.get(place.id))
                 .get(transitionModelId);
@@ -442,7 +178,6 @@ define([
 
             const links = inLinks.filter((link) => link.getSourceElement() === place);
             links.forEach((link) => {
-                //TODO: send multiple tokens (with delay) OR add a number label above the circle
                 const token = joint.V('circle', { r: 5 });
                 link.findView(self._paper).sendToken(token, 500);
             });
@@ -451,11 +186,9 @@ define([
         outPlaces.forEach((place) => {
             const links = outLinks.filter((link) => link.getTargetElement() === place);
             links.forEach((link) => {
-                //TODO: set weight vvv
                 const weight = this._petriNet.weights
                     .get(transitionModelId)
                     .get(this._petriNet.joint2modelIds.get(place.id));
-                //TODO: send multiple tokens (with delay) OR add a number label above the circle
                 const token = joint.V('circle', { r: 5 });
                 link.findView(self._paper).sendToken(token, 500);
                 link.findView(self._paper).sendToken(token, 500, () =>
@@ -463,16 +196,9 @@ define([
                 );
             });
         });
-
-        //x
-        //TODO: prob don't wanna use the "modelId", also wanna have a "reset" (don't wanna update the actual model)
-        //TODO: and a "apply" (2 control buttons "reset" and "apply to model")
-        //debugger;
     };
 
     SimPetriNetFiringWidget.prototype._decorate = function () {
-        //TODO:
-        //this._petriNet.setFireableTransitions(this._petriNet.transitions);
         const transitions = Array.from(this._petriNet.transitions.keys())
             .map((key) => this._petriNet.model2jointIds.get(key))
             .map((id) => this._graph.getCell(id));
@@ -618,56 +344,19 @@ define([
     // Adding/Removing/Updating items
     SimPetriNetFiringWidget.prototype.addNode = function (desc) {
         console.log('adding', desc);
-        //TODO:
-        // if (desc) {
-        //     // Add node to a table of nodes
-        //     var node = document.createElement('div'),
-        //         label = 'children';
-        //     if (desc.childrenIds.length === 1) {
-        //         label = 'child';
-        //     }
-        //     this.nodes[desc.id] = desc;
-        //     node.innerHTML =
-        //         'Adding node "' +
-        //         desc.name +
-        //         '" (click to view). It has ' +
-        //         desc.childrenIds.length +
-        //         ' ' +
-        //         label +
-        //         '.';
-        //     this._el.append(node);
-        //     node.onclick = this.onNodeClick.bind(this, desc.id);
-        // }
     };
 
     SimPetriNetFiringWidget.prototype.removeNode = function (gmeId) {
         console.log('removing', gmeId);
-        //TODO:
-        // var desc = this.nodes[gmeId];
-        // this._el.append('<div>Removing node "' + desc.name + '"</div>');
-        // delete this.nodes[gmeId];
     };
 
     SimPetriNetFiringWidget.prototype.updateNode = function (desc) {
         console.log('updating', desc);
-        //TODO:
-        // if (desc) {
-        //     this._logger.debug('Updating node:', desc);
-        //     this._el.append('<div>Updating node "' + desc.name + '"</div>');
-        // }
     };
 
     /* * * * * * * * Visualizer event handlers * * * * * * * */
 
-    SimPetriNetFiringWidget.prototype.onNodeClick = function (/*id*/) {
-        //TODO: overriding in controller! (trigger transitions!)
-        // This currently changes the active node to the given id and
-        // this is overridden in the controller.
-    };
-
-    // SimPetriNetFiringWidget.prototype.onBackgroundDblClick = function () {
-    //     this._el.append('<div>Background was double-clicked!!</div>');
-    // };
+    SimPetriNetFiringWidget.prototype.onNodeClick = function () {};
 
     /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
     SimPetriNetFiringWidget.prototype.destroy = function () {};
